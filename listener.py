@@ -22,6 +22,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Optional
@@ -69,15 +70,44 @@ def thread_key(event: dict) -> tuple[str, str]:
     return (str(event["channelId"]), str(event.get("parentId") or event["id"]))
 
 
+#: the turn reasons (contract AGENT_TURN_IDENTITY_SCHEMA.reason) that ADDRESS this teammate: a person mentioned it, wrote
+#: to it directly, or another AI teammate handed it the message. Silence is not an answer to one of these (see _finish).
+ADDRESSED_REASONS = frozenset({"mention", "dm", "handoff"})
+
+
+def addressed(event: dict) -> bool:
+    """Whether the turn's message is addressed to this teammate: the turn identity's reason when the server sends one, else
+    the older ``addressedBy`` (a server from before turn identity) saying it was mentioned."""
+    turn = event.get("turn")
+    if isinstance(turn, dict):
+        return turn.get("reason") in ADDRESSED_REASONS
+    return event.get("addressedBy") == "mention"
+
+
+def requires_answer(event: dict) -> bool:
+    """Whether silence is no answer for this turn: it is addressed to this teammate (:func:`addressed`), or it carries folded
+    messages (``alsoAnswers``: earlier messages to this teammate whose own turns Conduyt skipped and never serves again)."""
+    return addressed(event) or bool(event.get("alsoAnswers"))
+
+
 def _utf16_units(text: str) -> int:
     return len(text.encode("utf-16-le")) // 2
 
 
 def shorten_to_limit(text: str, limit: int = MAX_REPLY_UNITS) -> str:
-    """A PREFIX of ``text`` that fits ``limit`` UTF-16 units, cut at the safest boundary inside the limit: the last paragraph
-    break, else the last line break or sentence end, else the last space, else the last whole code point (Python strings
-    are code points, so a slice never splits one; a surrogate pair is never split because a character outside the BMP is
-    one code point). Only removes characters: no marker, no added character; trailing whitespace of the prefix is dropped."""
+    """A PREFIX of ``text`` that fits ``limit`` UTF-16 units (Conduyt counts as JavaScript does). Only removes characters: no
+    marker, no added character; trailing whitespace of the prefix is dropped.
+
+    The answer is read ONCE with a CommonMark block parser (markdown-it, which Hermes ships through rich; tables enabled), as
+    its top-level blocks with their line ranges, and the cut keeps WHOLE blocks: the longest run of whole top-level blocks
+    that fits, less any trailing heading (ATX or setext, its title line included), thematic break, list or quote whose last
+    block is one of those, list ending in an empty item, or table without a body row (unless only such blocks fit: then they stand). A code block, list, quote or table is therefore kept whole or dropped whole: no fence
+    is left open and none is invented. Only a top-level PARAGRAPH, which holds no block structure, is cut inside: at its last
+    line break or sentence end, else its last space, when that lies in the second half of the part that fits; else the whole
+    blocks before it stand when they reach the second half; else the paragraph is cut at the limit. A cut inside the
+    paragraph is used only when the result re-parses as the same blocks plus that one paragraph (:func:`_parses_as`). When not even the first
+    block fits and it is not a paragraph (one giant code block or list), the plain cut stands (:func:`_plain_cut`; a known
+    limit). Without the parser (it cannot be imported, or it fails on this text) every answer gets the plain cut."""
     if _utf16_units(text) <= limit:
         return text
     lo, hi = 0, len(text)
@@ -88,12 +118,127 @@ def shorten_to_limit(text: str, limit: int = MAX_REPLY_UNITS) -> str:
         else:
             hi = mid - 1
     head = text[:lo]
+    blocks = _top_blocks(text)
+    if blocks is None:
+        return _plain_cut(head)
+    floor = len(head) // 2
+    fits = [b for b in blocks if len(text[:b[1]].rstrip()) <= lo]   # what is posted is right-stripped
+    whole = list(fits)
+    while whole and whole[-1][2]:
+        whole.pop()   # a dangling heading, rule, empty last list item or bodiless table
+    if fits and not whole:
+        whole = fits  # only dangling blocks fit: they stand rather than a cut into the block after them
+    kept = whole[-1][1] if whole else 0
+    straddle = next((b for b in blocks if b not in fits and b[0] < lo), None)
+    if straddle is not None and straddle[3] == "paragraph":
+        candidates = []
+        for marks in (("\n", ". ", "! ", "? ", "\u3002"), (" ",)):
+            at = max(head.rfind(m, straddle[0]) + (len(m) if m != "\n" else 0) for m in marks)
+            if at > max(floor, straddle[0]):
+                candidates.append(at)
+                break
+        if kept > floor:
+            candidates.append(kept)
+        candidates.append(lo)
+        before = [b[:2] for b in blocks if b[0] < straddle[0]]
+        for at in candidates:
+            cut = head[:at].rstrip()
+            if at == kept or _parses_as(cut, before, straddle[0]):
+                return cut
+    if kept and text[:kept].strip():
+        return text[:kept].rstrip()
+    return _plain_cut(head)
+
+
+def _parses_as(cut: str, before: list, para_start: int) -> bool:
+    """Whether a cut INSIDE a paragraph changed no structure: ``cut`` parses as exactly the whole blocks before that paragraph
+    (same offsets) and then one paragraph from its start. Shortening a line can make a block of it (a ``` line whose info
+    string lost its backtick becomes a fence, a line cut to ``#`` a heading); such a cut is refused."""
+    got = _top_blocks(cut)
+    return (got is not None and [b[:2] for b in got[:-1]] == before and len(got) == len(before) + 1
+            and got[-1][3] == "paragraph" and got[-1][0] == para_start)
+
+
+def _plain_cut(head: str) -> str:
+    """The plain cut of ``head`` (the longest prefix that fits): the last paragraph break, else the last line break or sentence
+    end, else the last space, when that boundary lies in the second half of ``head``; else ``head`` itself."""
     floor = len(head) // 2   # a boundary in the first half would throw away too much: cut later instead
-    for marks in (("\n\n",), ("\n", ". ", "! ", "? ", "。"), (" ",)):
+    for marks in (("\n\n",), ("\n", ". ", "! ", "? ", "\u3002"), (" ",)):
         at = max(head.rfind(m) + (len(m) if m != "\n\n" else 0) for m in marks)
         if at > floor:
             return head[:at].rstrip()
     return head.rstrip()
+
+
+_CONTAINERS = frozenset({"blockquote_open", "bullet_list_open", "ordered_list_open", "list_item_open"})
+_PARSER: Any = None        # the markdown-it parser, built on first use; False once it proved unavailable
+_PARSER_NOTED = False
+
+
+def _markdown():
+    """The CommonMark parser with tables (markdown-it-py, a dependency of rich, which Hermes requires), or None, logged
+    once, when it cannot be built: every cut is then the plain cut."""
+    global _PARSER, _PARSER_NOTED
+    if _PARSER is None:
+        try:
+            from markdown_it import MarkdownIt
+            _PARSER = MarkdownIt("commonmark").enable("table")
+        except Exception as exc:
+            _PARSER = False
+            if not _PARSER_NOTED:
+                _PARSER_NOTED = True
+                logger.warning("Conduyt: no Markdown parser (%s); long answers get the plain cut", type(exc).__name__)
+    return _PARSER or None
+
+
+def _top_blocks(text: str) -> Optional[list[tuple[int, int, bool, str]]]:
+    """The top-level blocks of ``text`` as (start offset, end offset, dangling, kind), from markdown-it's line maps. Lines
+    are counted as markdown-it counts them (it normalises CRLF and CR to LF before parsing). End offsets include the block's
+    last line ending. None when there is no parser or it fails on this text."""
+    md = _markdown()
+    if md is None:
+        return None
+    try:
+        tokens = md.parse(text)
+    except Exception as exc:
+        logger.warning("Conduyt: the Markdown parser failed (%s); this answer gets the plain cut", type(exc).__name__)
+        return None
+    starts = [0] + [m.end() for m in re.finditer(r"\r\n|\r|\n", text)]
+    offset = lambda line: starts[line] if line < len(starts) else len(text)
+    blocks: list[tuple[int, int, bool, str]] = []
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok.level != 0 or tok.nesting == -1 or tok.map is None:
+            i += 1
+            continue
+        j = i
+        if tok.nesting == 1:   # walk to the matching close; collect what the dangling rule needs
+            depth = 0
+            while True:
+                depth += tokens[j].nesting
+                if depth == 0:
+                    break
+                j += 1
+        inner = tokens[i:j + 1]
+        kind = tok.type[:-5] if tok.type.endswith("_open") else tok.type
+        if kind in ("heading", "hr"):
+            dangling = True
+        elif kind in ("bullet_list", "ordered_list", "blockquote"):
+            # a container ending in a heading or rule (its last leaf block), or a list whose last item is empty
+            leaf = next((t for t in reversed(inner[1:-1]) if t.nesting != -1 and t.type != "inline"
+                         and t.type not in _CONTAINERS), None)
+            dangling = leaf is not None and leaf.type in ("heading_open", "hr")
+            if kind != "blockquote":
+                last_item = max(k for k, t in enumerate(inner) if t.type == "list_item_open" and t.level == 1)
+                dangling = dangling or inner[last_item + 1].type == "list_item_close"
+        elif kind == "table":
+            dangling = not any(t.type == "tbody_open" for t in inner)
+        else:
+            dangling = False
+        blocks.append((offset(tok.map[0]), offset(tok.map[1]), dangling, kind))
+        i = j + 1
+    return blocks
 
 
 def finalize_reply(text: str) -> Optional[str]:
@@ -543,6 +688,12 @@ class Listener:
             self.stats["failed"] += 1
             logger.warning("Conduyt turn %s needs attention (%s); it is not re-run automatically", turn.id, outcome.reason or "failed")
             return False
+        if outcome.kind == "silent" and requires_answer(turn.event):
+            # a mention / DM / hand-off / folded turn the model did not answer (NO_REPLY, or nothing left to post): not a silent ending,
+            # which Conduyt shows as nothing at all; the typed failure instead (needs attention, the thread rolled over).
+            # Nothing is posted: the plugin never writes an answer of its own
+            logger.warning("Conduyt turn %s: the model gave no answer to a message addressed to it; nothing posted", turn.id)
+            return await self._finish(turn, TurnOutcome("failed", reason="no_answer"), deadline)
         if outcome.kind == "silent":
             clean = False
             try:

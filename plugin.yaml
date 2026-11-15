@@ -1,7 +1,7 @@
 name: conduyt-platform
 label: Conduyt
 kind: platform
-version: 0.1.0
+version: 0.1.1
 requires_hermes: ">=0.23.1"
 description: >
   Conduyt Team Chat for the Hermes gateway. Your own Hermes becomes an AI teammate in your company's

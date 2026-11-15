@@ -1,0 +1,2382 @@
+{
+  "source": {
+    "file": "lib/agent-protocol-schema.ts",
+    "commit": "763604c372654d9a57633f1714c4454be7000a71"
+  },
+  "AGENT_INBOX_PAGE_SCHEMA": {
+    "type": "object",
+    "properties": {
+      "events": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "channelId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "body": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "kind": {
+              "type": "string"
+            },
+            "metadata": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "parentId": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "format": "uuid"
+            },
+            "seq": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "agentInboxSeq": {
+              "type": "integer",
+              "description": "the account-wide inbox position (acknowledge it)"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "sender": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "firstName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "lastName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "isAgent": {
+                  "type": "boolean"
+                },
+                "agentProvider": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "agentHandle": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "isOwner": {
+                  "type": "boolean",
+                  "description": "the sender is this AI teammate's owner: only the owner's own messages may make it open local files"
+                }
+              },
+              "required": [
+                "id",
+                "isAgent"
+              ]
+            },
+            "channel": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "channelKey": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "agentResponseMode": {
+                  "type": "string"
+                },
+                "dealId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "a deal channel's deal (null when none, or fenced for this agent)"
+                },
+                "contactId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "a contact channel's contact (null when none, or fenced for this agent)"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "kind"
+              ]
+            },
+            "localFiles": {
+              "type": "boolean",
+              "description": "this turn may read the owner's local files: the owner sent the message and the workspace's Local files switch is on. Read on the owner's computer only; a reply that used local files names them in localSources"
+            },
+            "addressedBy": {
+              "type": "string",
+              "enum": [
+                "mention",
+                "thread_follow_up",
+                "channel"
+              ],
+              "description": "why this AI teammate was handed the message: mention (it was mentioned), thread_follow_up (a person replied, mentioning nobody, in a thread whose most recent answer is this teammate's), or channel (AI Team Chat, a DM, or a channel set to always). Present only while the workspace's thread view is on"
+            },
+            "turn": {
+              "type": "object",
+              "description": "who this AI teammate is on this turn, why it was handed the message, and the channel's other AI teammates",
+              "properties": {
+                "you": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "handle"
+                  ]
+                },
+                "workspace": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "the workspace's name"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "mention",
+                    "handoff",
+                    "thread_follow_up",
+                    "dm",
+                    "ai_team_chat",
+                    "always_channel"
+                  ],
+                  "description": "why this teammate was handed the message: mention (a person mentioned it), handoff (an AI teammate's message mentioned it: answer the part handed to you), thread_follow_up (a person replied in a thread it answered), dm (a direct message to it), ai_team_chat (the AI Team Chat room), always_channel (a channel set to answer every message)"
+                },
+                "teammates": {
+                  "type": "array",
+                  "description": "the channel's OTHER active AI teammates (mention one with the composer markup @[Name](id))",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "handle": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "handle"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "you",
+                "workspace",
+                "reason",
+                "teammates"
+              ]
+            },
+            "chainRemaining": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "how many more consecutive AI posts this turn's thread takes before Conduyt pauses the AI teammates there: the agent-to-agent chain cap minus the thread's current run of consecutive AI posts, never below 0; at 0 an AI reply to another AI's message in the thread is refused with the pause line"
+            },
+            "turnsRemainingToday": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "this teammate's daily turn budget left after this turn is charged (on the inbox page the claim has not charged it yet; on a claim's retried event it has), never below 0"
+            },
+            "context": {
+              "type": "object",
+              "description": "the recent context this agent may see before the event: for a reply (thread) event, its thread; for a top-level event, the channel's top-level stream plus recent AI-teammate replies from the channel's threads (other threads), each carrying the body prefix context.recent[].body describes",
+              "properties": {
+                "recent": {
+                  "type": "array",
+                  "description": "the earlier non-deleted messages before the event, oldest first, nothing at or below the workspace's or the channel's agent fence. A reply (thread) event: at most the last 20 of its thread (its root and replies). A top-level event: at most the last 20 of the channel's top-level stream plus at most the last 6 AI-teammate replies from the channel's threads (any teammate, this one included; each body prefixed, see body), merged by seq, so at most 26",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "seq": {
+                        "type": "integer"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "description": "text, a card kind, or system (a guard line such as a pause)"
+                      },
+                      "body": {
+                        "type": "string",
+                        "description": "the stored text (for a key without deal access, a text that contains \"rec:deal:\" anywhere is replaced WHOLE by \"[message mentions a deal]\" and nothing of it is shown (a plain-text \"rec:deal:\" is replaced the same way, by design)), bounded to 2,000 characters with a \" [truncated]\" tail. Rows of the event's own stream carry no prefix. An AI-teammate reply that a TOP-LEVEL event carries from one of the channel's threads carries a prefix: the body starts with \"[<author>, <time>, <where>] \" and then the reply's own text; <author> is \"your reply\" when this teammate wrote it; otherwise <author> is the writing teammate's name, or \"AI teammate\" when it has no name; followed by \" (@<handle>)\" when that teammate has a handle, and by nothing when it has none; <time> is the reply's creation time in UTC, \"YYYY-MM-DD HH:MM UTC\"; <where> is in the thread under \"<line>\" only when the thread's root is shown: the ultimate root (its root_id, else its parent chain walked up at most 64 edges without a cycle) exists, is in the same channel, is above the agent fences, is not deleted, and for a key without deal access, the message is neither a deal / handoff / help / panic / win card naming a deal (metadata.card.dealId) nor any message carrying a top-level metadata.dealId; <line> comes from the root's first line: for a key without deal access, a root whose WHOLE body contains the deal-mention literal shows \"[message mentions a deal]\" as <line> and nothing of its own text (a text that contains \"rec:deal:\" anywhere is replaced WHOLE by \"[message mentions a deal]\" and nothing of it is shown (a plain-text \"rec:deal:\" is replaced the same way, by design); tested on the whole body before the first line is taken and before any cut); otherwise the first line is taken and only its first 400 characters are read, trimmed, and it must not be empty; it is cut at 120 code points (a character outside the BMP is never split; a multi-code-point emoji sequence can be) followed by \"...\" when longer; otherwise <where> is \"in a thread\""
+                      },
+                      "sender": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "name": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "isAgent": {
+                            "type": "boolean"
+                          },
+                          "agentHandle": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "isAgent",
+                          "agentHandle"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "seq",
+                      "createdAt",
+                      "kind",
+                      "body",
+                      "sender"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "recent"
+              ]
+            },
+            "alsoAnswers": {
+              "type": "array",
+              "maxItems": 200,
+              "description": "present only when this ONE turn also answers earlier messages to this AI teammate in the same thread (a burst of mentions): ALL of them, oldest first (a fold is at most 49 earlier messages on one page; maxItems leaves room for the folds a released claim carried). Answer them all in this turn's one reply; their own turns were folded into this one and are never served, charged or claimed (this event's claim records them as skipped)",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "messageId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "senderId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "senderName": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "body": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "the message text, cut to 1,000 characters with a ... marker. When the serialised list would pass its UTF-8 byte budget (the larger of 24 KB and 490 bytes per entry) every body is instead cut to an equal share of the budget left after the fixed fields (counted in serialised bytes, so a control character is 6), at least 80 bytes, and long sender names are shortened first (40 characters, then 24 serialised bytes). A body is never emptied and no entry is ever dropped (the whole text is in the thread: read_thread)"
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "messageId",
+                  "senderId",
+                  "senderName",
+                  "body",
+                  "createdAt"
+                ]
+              }
+            },
+            "alsoTotal": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "present with alsoAnswers: how many earlier messages this turn folded in: always the length of alsoAnswers (kept for compatibility)"
+            },
+            "instructions": {
+              "type": "string",
+              "description": "what to do with this turn, in plain words: where a reply goes, then the turn rules every AI teammate follows (answer automatically through the Conduyt tools, the one action policy with the claim token, never report back to the owner instead, the claim token only as the tools' argument). No id or token: a listener prints it verbatim beside the turn's ids and claim token"
+            }
+          },
+          "required": [
+            "id",
+            "channelId",
+            "agentInboxSeq",
+            "parentId",
+            "body",
+            "sender",
+            "channel"
+          ]
+        }
+      },
+      "nextSeq": {
+        "type": "integer",
+        "description": "acknowledge this position once the page's events are handled"
+      },
+      "afterSeq": {
+        "type": "integer"
+      },
+      "timedOut": {
+        "type": "boolean"
+      },
+      "needsAttention": {
+        "type": "array",
+        "description": "claims that failed, timed out or whose listener died, with no reply receipt: reported, never re-run automatically",
+        "items": {
+          "type": "object",
+          "properties": {
+            "messageId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "seq": {
+              "type": "integer"
+            },
+            "claimedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "listenerId": {
+              "type": "string"
+            },
+            "possiblyReplied": {
+              "type": "boolean",
+              "description": "its outcome stayed unknown: retry only with force"
+            }
+          },
+          "required": [
+            "messageId",
+            "seq",
+            "claimedAt",
+            "listenerId",
+            "possiblyReplied"
+          ]
+        }
+      },
+      "repliedAckPending": {
+        "type": "array",
+        "description": "turns whose RECEIPT committed (they replied, reacted or went silent: outcome) but were never acknowledged (their listener died): acknowledge each with its seq and generation; never re-run",
+        "items": {
+          "type": "object",
+          "properties": {
+            "messageId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "seq": {
+              "type": "integer"
+            },
+            "generation": {
+              "type": "integer"
+            },
+            "outcome": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "replied",
+                "reacted",
+                "silent",
+                null
+              ],
+              "description": "how the turn ended; null for a receipt from before this field existed (a reply)"
+            }
+          },
+          "required": [
+            "messageId",
+            "seq",
+            "generation"
+          ]
+        }
+      },
+      "budget": {
+        "type": "object",
+        "properties": {
+          "turnsToday": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "turns (successful claims) taken in the workspace's day (its settings timezone)"
+          },
+          "budget": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "the daily turn budget (200)"
+          },
+          "resetAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "the next midnight in the workspace's timezone"
+          }
+        },
+        "required": [
+          "turnsToday",
+          "budget",
+          "resetAt"
+        ],
+        "description": "this agent's daily turn budget: when turnsToday reaches budget, a claim answers 429 agent_daily_budget_exhausted until resetAt"
+      },
+      "tests": {
+        "type": "array",
+        "description": "the connection tests waiting for this listener (at most one): post the hello once with POST /chat/channels/{channelId}/messages { body: hello, testToken, idempotencyKey } at top level; it is not a turn (no claim, no acknowledgement). Present only while the test is fresh (ten minutes) and unanswered, and only to a listener that reported a version that answers tests (conduyt CLI 1.91.0 and later)",
+        "items": {
+          "type": "object",
+          "properties": {
+            "event": {
+              "type": "string",
+              "enum": [
+                "chat.agent_test"
+              ]
+            },
+            "channelId": {
+              "type": "string",
+              "format": "uuid",
+              "description": "AI Team Chat"
+            },
+            "channelName": {
+              "type": "string"
+            },
+            "hello": {
+              "type": "string",
+              "description": "the exact text to post"
+            },
+            "testToken": {
+              "type": "string",
+              "description": "the test's capability: this teammate, this channel, until expiresAt, spent once"
+            },
+            "idempotencyKey": {
+              "type": "string",
+              "description": "the key the hello posts under (derived from testToken)"
+            },
+            "requestedAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "expiresAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "event",
+            "channelId",
+            "channelName",
+            "hello",
+            "testToken",
+            "idempotencyKey",
+            "requestedAt",
+            "expiresAt"
+          ]
+        }
+      }
+    },
+    "required": [
+      "events",
+      "nextSeq",
+      "afterSeq",
+      "timedOut",
+      "needsAttention",
+      "repliedAckPending"
+    ]
+  },
+  "AGENT_INBOX_EVENT_SCHEMA": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "channelId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "body": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "kind": {
+        "type": "string"
+      },
+      "metadata": {
+        "type": "object",
+        "additionalProperties": true
+      },
+      "parentId": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "format": "uuid"
+      },
+      "seq": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      },
+      "agentInboxSeq": {
+        "type": "integer",
+        "description": "the account-wide inbox position (acknowledge it)"
+      },
+      "createdAt": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "sender": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "firstName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isAgent": {
+            "type": "boolean"
+          },
+          "agentProvider": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agentHandle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isOwner": {
+            "type": "boolean",
+            "description": "the sender is this AI teammate's owner: only the owner's own messages may make it open local files"
+          }
+        },
+        "required": [
+          "id",
+          "isAgent"
+        ]
+      },
+      "channel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "channelKey": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agentResponseMode": {
+            "type": "string"
+          },
+          "dealId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "a deal channel's deal (null when none, or fenced for this agent)"
+          },
+          "contactId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "a contact channel's contact (null when none, or fenced for this agent)"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ]
+      },
+      "localFiles": {
+        "type": "boolean",
+        "description": "this turn may read the owner's local files: the owner sent the message and the workspace's Local files switch is on. Read on the owner's computer only; a reply that used local files names them in localSources"
+      },
+      "addressedBy": {
+        "type": "string",
+        "enum": [
+          "mention",
+          "thread_follow_up",
+          "channel"
+        ],
+        "description": "why this AI teammate was handed the message: mention (it was mentioned), thread_follow_up (a person replied, mentioning nobody, in a thread whose most recent answer is this teammate's), or channel (AI Team Chat, a DM, or a channel set to always). Present only while the workspace's thread view is on"
+      },
+      "turn": {
+        "type": "object",
+        "description": "who this AI teammate is on this turn, why it was handed the message, and the channel's other AI teammates",
+        "properties": {
+          "you": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "handle": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "handle"
+            ]
+          },
+          "workspace": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "the workspace's name"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "mention",
+              "handoff",
+              "thread_follow_up",
+              "dm",
+              "ai_team_chat",
+              "always_channel"
+            ],
+            "description": "why this teammate was handed the message: mention (a person mentioned it), handoff (an AI teammate's message mentioned it: answer the part handed to you), thread_follow_up (a person replied in a thread it answered), dm (a direct message to it), ai_team_chat (the AI Team Chat room), always_channel (a channel set to answer every message)"
+          },
+          "teammates": {
+            "type": "array",
+            "description": "the channel's OTHER active AI teammates (mention one with the composer markup @[Name](id))",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "handle": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "handle"
+              ]
+            }
+          }
+        },
+        "required": [
+          "you",
+          "workspace",
+          "reason",
+          "teammates"
+        ]
+      },
+      "chainRemaining": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "how many more consecutive AI posts this turn's thread takes before Conduyt pauses the AI teammates there: the agent-to-agent chain cap minus the thread's current run of consecutive AI posts, never below 0; at 0 an AI reply to another AI's message in the thread is refused with the pause line"
+      },
+      "turnsRemainingToday": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "this teammate's daily turn budget left after this turn is charged (on the inbox page the claim has not charged it yet; on a claim's retried event it has), never below 0"
+      },
+      "context": {
+        "type": "object",
+        "description": "the recent context this agent may see before the event: for a reply (thread) event, its thread; for a top-level event, the channel's top-level stream plus recent AI-teammate replies from the channel's threads (other threads), each carrying the body prefix context.recent[].body describes",
+        "properties": {
+          "recent": {
+            "type": "array",
+            "description": "the earlier non-deleted messages before the event, oldest first, nothing at or below the workspace's or the channel's agent fence. A reply (thread) event: at most the last 20 of its thread (its root and replies). A top-level event: at most the last 20 of the channel's top-level stream plus at most the last 6 AI-teammate replies from the channel's threads (any teammate, this one included; each body prefixed, see body), merged by seq, so at most 26",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "seq": {
+                  "type": "integer"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "kind": {
+                  "type": "string",
+                  "description": "text, a card kind, or system (a guard line such as a pause)"
+                },
+                "body": {
+                  "type": "string",
+                  "description": "the stored text (for a key without deal access, a text that contains \"rec:deal:\" anywhere is replaced WHOLE by \"[message mentions a deal]\" and nothing of it is shown (a plain-text \"rec:deal:\" is replaced the same way, by design)), bounded to 2,000 characters with a \" [truncated]\" tail. Rows of the event's own stream carry no prefix. An AI-teammate reply that a TOP-LEVEL event carries from one of the channel's threads carries a prefix: the body starts with \"[<author>, <time>, <where>] \" and then the reply's own text; <author> is \"your reply\" when this teammate wrote it; otherwise <author> is the writing teammate's name, or \"AI teammate\" when it has no name; followed by \" (@<handle>)\" when that teammate has a handle, and by nothing when it has none; <time> is the reply's creation time in UTC, \"YYYY-MM-DD HH:MM UTC\"; <where> is in the thread under \"<line>\" only when the thread's root is shown: the ultimate root (its root_id, else its parent chain walked up at most 64 edges without a cycle) exists, is in the same channel, is above the agent fences, is not deleted, and for a key without deal access, the message is neither a deal / handoff / help / panic / win card naming a deal (metadata.card.dealId) nor any message carrying a top-level metadata.dealId; <line> comes from the root's first line: for a key without deal access, a root whose WHOLE body contains the deal-mention literal shows \"[message mentions a deal]\" as <line> and nothing of its own text (a text that contains \"rec:deal:\" anywhere is replaced WHOLE by \"[message mentions a deal]\" and nothing of it is shown (a plain-text \"rec:deal:\" is replaced the same way, by design); tested on the whole body before the first line is taken and before any cut); otherwise the first line is taken and only its first 400 characters are read, trimmed, and it must not be empty; it is cut at 120 code points (a character outside the BMP is never split; a multi-code-point emoji sequence can be) followed by \"...\" when longer; otherwise <where> is \"in a thread\""
+                },
+                "sender": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "isAgent": {
+                      "type": "boolean"
+                    },
+                    "agentHandle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "isAgent",
+                    "agentHandle"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "seq",
+                "createdAt",
+                "kind",
+                "body",
+                "sender"
+              ]
+            }
+          }
+        },
+        "required": [
+          "recent"
+        ]
+      },
+      "alsoAnswers": {
+        "type": "array",
+        "maxItems": 200,
+        "description": "present only when this ONE turn also answers earlier messages to this AI teammate in the same thread (a burst of mentions): ALL of them, oldest first (a fold is at most 49 earlier messages on one page; maxItems leaves room for the folds a released claim carried). Answer them all in this turn's one reply; their own turns were folded into this one and are never served, charged or claimed (this event's claim records them as skipped)",
+        "items": {
+          "type": "object",
+          "properties": {
+            "messageId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "senderId": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "senderName": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "body": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "the message text, cut to 1,000 characters with a ... marker. When the serialised list would pass its UTF-8 byte budget (the larger of 24 KB and 490 bytes per entry) every body is instead cut to an equal share of the budget left after the fixed fields (counted in serialised bytes, so a control character is 6), at least 80 bytes, and long sender names are shortened first (40 characters, then 24 serialised bytes). A body is never emptied and no entry is ever dropped (the whole text is in the thread: read_thread)"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "required": [
+            "messageId",
+            "senderId",
+            "senderName",
+            "body",
+            "createdAt"
+          ]
+        }
+      },
+      "alsoTotal": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "present with alsoAnswers: how many earlier messages this turn folded in: always the length of alsoAnswers (kept for compatibility)"
+      },
+      "instructions": {
+        "type": "string",
+        "description": "what to do with this turn, in plain words: where a reply goes, then the turn rules every AI teammate follows (answer automatically through the Conduyt tools, the one action policy with the claim token, never report back to the owner instead, the claim token only as the tools' argument). No id or token: a listener prints it verbatim beside the turn's ids and claim token"
+      }
+    },
+    "required": [
+      "id",
+      "channelId",
+      "agentInboxSeq",
+      "parentId",
+      "body",
+      "sender",
+      "channel"
+    ]
+  },
+  "AGENT_CLAIM_REQUEST_SCHEMA": {
+    "oneOf": [
+      {
+        "type": "object",
+        "title": "claim (the default)",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listenerId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9:_.-]{8,128}$"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "claim"
+            ]
+          }
+        },
+        "required": [
+          "messageId",
+          "listenerId"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "title": "retry",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listenerId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9:_.-]{8,128}$"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "retry"
+            ]
+          },
+          "force": {
+            "type": "boolean",
+            "description": "also re-run a turn whose outcome stayed unknown (never one with a reply receipt)"
+          }
+        },
+        "required": [
+          "messageId",
+          "listenerId",
+          "action"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "title": "renew / release",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listenerId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9:_.-]{8,128}$"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "renew",
+              "release"
+            ]
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "the claim's generation (from the claim / retry answer)"
+          }
+        },
+        "required": [
+          "messageId",
+          "listenerId",
+          "action",
+          "generation"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "title": "status",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listenerId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9:_.-]{8,128}$"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "status"
+            ]
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "optional: the generation held; without it the answer is THIS listener's claim on the message, whatever its generation (a listener recovering from an unknown answer)"
+          }
+        },
+        "required": [
+          "messageId",
+          "listenerId",
+          "action"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "title": "fail",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listenerId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9:_.-]{8,128}$"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "fail"
+            ]
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "the claim's generation (from the claim / retry answer)"
+          },
+          "possiblyReplied": {
+            "type": "boolean",
+            "description": "the listener could not learn the outcome within its ambiguity window"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "turn_timeout"
+            ],
+            "description": "why the turn needs attention: turn_timeout = a queued turn produced nothing within its budget"
+          }
+        },
+        "required": [
+          "messageId",
+          "listenerId",
+          "action",
+          "generation"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "title": "dismiss",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listenerId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9:_.-]{8,128}$"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "dismiss"
+            ]
+          }
+        },
+        "required": [
+          "messageId",
+          "listenerId",
+          "action"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "title": "skip",
+        "description": "an explicit skip of an inbox event nobody claimed: recorded as a terminal claim row, so the cursor may pass it",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listenerId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9:_.-]{8,128}$"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "skip"
+            ]
+          }
+        },
+        "required": [
+          "messageId",
+          "listenerId",
+          "action"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "title": "silent",
+        "description": "the turn needs no response: completes the claim with outcome silent and moves the cursor as an acknowledgement does; a repeat on the claim it completed answers the same",
+        "properties": {
+          "messageId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "listenerId": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9:_.-]{8,128}$"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "silent"
+            ]
+          },
+          "generation": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "the claim's generation (from the claim / retry answer)"
+          }
+        },
+        "required": [
+          "messageId",
+          "listenerId",
+          "action",
+          "generation"
+        ],
+        "additionalProperties": false
+      }
+    ]
+  },
+  "AGENT_CLAIM_RESULT_SCHEMA": {
+    "oneOf": [
+      {
+        "type": "object",
+        "title": "claim / retry",
+        "properties": {
+          "claimed": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "seq": {
+            "type": "integer"
+          },
+          "generation": {
+            "type": "integer"
+          },
+          "event": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "channelId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "body": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "kind": {
+                "type": "string"
+              },
+              "metadata": {
+                "type": "object",
+                "additionalProperties": true
+              },
+              "parentId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid"
+              },
+              "seq": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "agentInboxSeq": {
+                "type": "integer",
+                "description": "the account-wide inbox position (acknowledge it)"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "sender": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "firstName": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "lastName": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "isAgent": {
+                    "type": "boolean"
+                  },
+                  "agentProvider": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "agentHandle": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "isOwner": {
+                    "type": "boolean",
+                    "description": "the sender is this AI teammate's owner: only the owner's own messages may make it open local files"
+                  }
+                },
+                "required": [
+                  "id",
+                  "isAgent"
+                ]
+              },
+              "channel": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "channelKey": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "agentResponseMode": {
+                    "type": "string"
+                  },
+                  "dealId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid",
+                    "description": "a deal channel's deal (null when none, or fenced for this agent)"
+                  },
+                  "contactId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "uuid",
+                    "description": "a contact channel's contact (null when none, or fenced for this agent)"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "kind"
+                ]
+              },
+              "localFiles": {
+                "type": "boolean",
+                "description": "this turn may read the owner's local files: the owner sent the message and the workspace's Local files switch is on. Read on the owner's computer only; a reply that used local files names them in localSources"
+              },
+              "addressedBy": {
+                "type": "string",
+                "enum": [
+                  "mention",
+                  "thread_follow_up",
+                  "channel"
+                ],
+                "description": "why this AI teammate was handed the message: mention (it was mentioned), thread_follow_up (a person replied, mentioning nobody, in a thread whose most recent answer is this teammate's), or channel (AI Team Chat, a DM, or a channel set to always). Present only while the workspace's thread view is on"
+              },
+              "turn": {
+                "type": "object",
+                "description": "who this AI teammate is on this turn, why it was handed the message, and the channel's other AI teammates",
+                "properties": {
+                  "you": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "handle": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "handle"
+                    ]
+                  },
+                  "workspace": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "the workspace's name"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "mention",
+                      "handoff",
+                      "thread_follow_up",
+                      "dm",
+                      "ai_team_chat",
+                      "always_channel"
+                    ],
+                    "description": "why this teammate was handed the message: mention (a person mentioned it), handoff (an AI teammate's message mentioned it: answer the part handed to you), thread_follow_up (a person replied in a thread it answered), dm (a direct message to it), ai_team_chat (the AI Team Chat room), always_channel (a channel set to answer every message)"
+                  },
+                  "teammates": {
+                    "type": "array",
+                    "description": "the channel's OTHER active AI teammates (mention one with the composer markup @[Name](id))",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "handle": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "handle"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "you",
+                  "workspace",
+                  "reason",
+                  "teammates"
+                ]
+              },
+              "chainRemaining": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "how many more consecutive AI posts this turn's thread takes before Conduyt pauses the AI teammates there: the agent-to-agent chain cap minus the thread's current run of consecutive AI posts, never below 0; at 0 an AI reply to another AI's message in the thread is refused with the pause line"
+              },
+              "turnsRemainingToday": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "this teammate's daily turn budget left after this turn is charged (on the inbox page the claim has not charged it yet; on a claim's retried event it has), never below 0"
+              },
+              "context": {
+                "type": "object",
+                "description": "the recent context this agent may see before the event: for a reply (thread) event, its thread; for a top-level event, the channel's top-level stream plus recent AI-teammate replies from the channel's threads (other threads), each carrying the body prefix context.recent[].body describes",
+                "properties": {
+                  "recent": {
+                    "type": "array",
+                    "description": "the earlier non-deleted messages before the event, oldest first, nothing at or below the workspace's or the channel's agent fence. A reply (thread) event: at most the last 20 of its thread (its root and replies). A top-level event: at most the last 20 of the channel's top-level stream plus at most the last 6 AI-teammate replies from the channel's threads (any teammate, this one included; each body prefixed, see body), merged by seq, so at most 26",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "seq": {
+                          "type": "integer"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "kind": {
+                          "type": "string",
+                          "description": "text, a card kind, or system (a guard line such as a pause)"
+                        },
+                        "body": {
+                          "type": "string",
+                          "description": "the stored text (for a key without deal access, a text that contains \"rec:deal:\" anywhere is replaced WHOLE by \"[message mentions a deal]\" and nothing of it is shown (a plain-text \"rec:deal:\" is replaced the same way, by design)), bounded to 2,000 characters with a \" [truncated]\" tail. Rows of the event's own stream carry no prefix. An AI-teammate reply that a TOP-LEVEL event carries from one of the channel's threads carries a prefix: the body starts with \"[<author>, <time>, <where>] \" and then the reply's own text; <author> is \"your reply\" when this teammate wrote it; otherwise <author> is the writing teammate's name, or \"AI teammate\" when it has no name; followed by \" (@<handle>)\" when that teammate has a handle, and by nothing when it has none; <time> is the reply's creation time in UTC, \"YYYY-MM-DD HH:MM UTC\"; <where> is in the thread under \"<line>\" only when the thread's root is shown: the ultimate root (its root_id, else its parent chain walked up at most 64 edges without a cycle) exists, is in the same channel, is above the agent fences, is not deleted, and for a key without deal access, the message is neither a deal / handoff / help / panic / win card naming a deal (metadata.card.dealId) nor any message carrying a top-level metadata.dealId; <line> comes from the root's first line: for a key without deal access, a root whose WHOLE body contains the deal-mention literal shows \"[message mentions a deal]\" as <line> and nothing of its own text (a text that contains \"rec:deal:\" anywhere is replaced WHOLE by \"[message mentions a deal]\" and nothing of it is shown (a plain-text \"rec:deal:\" is replaced the same way, by design); tested on the whole body before the first line is taken and before any cut); otherwise the first line is taken and only its first 400 characters are read, trimmed, and it must not be empty; it is cut at 120 code points (a character outside the BMP is never split; a multi-code-point emoji sequence can be) followed by \"...\" when longer; otherwise <where> is \"in a thread\""
+                        },
+                        "sender": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "name": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "isAgent": {
+                              "type": "boolean"
+                            },
+                            "agentHandle": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "isAgent",
+                            "agentHandle"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "seq",
+                        "createdAt",
+                        "kind",
+                        "body",
+                        "sender"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "recent"
+                ]
+              },
+              "alsoAnswers": {
+                "type": "array",
+                "maxItems": 200,
+                "description": "present only when this ONE turn also answers earlier messages to this AI teammate in the same thread (a burst of mentions): ALL of them, oldest first (a fold is at most 49 earlier messages on one page; maxItems leaves room for the folds a released claim carried). Answer them all in this turn's one reply; their own turns were folded into this one and are never served, charged or claimed (this event's claim records them as skipped)",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "messageId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "senderId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "senderName": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "body": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "the message text, cut to 1,000 characters with a ... marker. When the serialised list would pass its UTF-8 byte budget (the larger of 24 KB and 490 bytes per entry) every body is instead cut to an equal share of the budget left after the fixed fields (counted in serialised bytes, so a control character is 6), at least 80 bytes, and long sender names are shortened first (40 characters, then 24 serialised bytes). A body is never emptied and no entry is ever dropped (the whole text is in the thread: read_thread)"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "required": [
+                    "messageId",
+                    "senderId",
+                    "senderName",
+                    "body",
+                    "createdAt"
+                  ]
+                }
+              },
+              "alsoTotal": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "present with alsoAnswers: how many earlier messages this turn folded in: always the length of alsoAnswers (kept for compatibility)"
+              },
+              "instructions": {
+                "type": "string",
+                "description": "what to do with this turn, in plain words: where a reply goes, then the turn rules every AI teammate follows (answer automatically through the Conduyt tools, the one action policy with the claim token, never report back to the owner instead, the claim token only as the tools' argument). No id or token: a listener prints it verbatim beside the turn's ids and claim token"
+              }
+            },
+            "required": [
+              "id",
+              "channelId",
+              "agentInboxSeq",
+              "parentId",
+              "body",
+              "sender",
+              "channel"
+            ],
+            "description": "the event to run, as the server serves it NOW, rebuilt after the claim recorded its fold: a claim (not only a retry) returns it, with alsoAnswers holding the WHOLE fold the claim recorded (an event another listener released between the page and the claim included). A listener dispatches THIS event, never the page's copy; one that does not read it falls back to the page's event"
+          }
+        },
+        "required": [
+          "claimed",
+          "seq",
+          "generation"
+        ]
+      },
+      {
+        "type": "object",
+        "title": "renew / release / fail",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      {
+        "type": "object",
+        "title": "status",
+        "properties": {
+          "held": {
+            "type": "boolean"
+          },
+          "state": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "started",
+              "done",
+              "released",
+              "needs_attention",
+              "dismissed",
+              "skipped",
+              null
+            ]
+          },
+          "replied": {
+            "type": "boolean",
+            "description": "the turn's receipt: its reply, its reaction (with the claim token) or its silence (outcome says which)"
+          },
+          "outcome": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "replied",
+              "reacted",
+              "silent",
+              null
+            ],
+            "description": "how the turn ended: replied, reacted or silent; null while it runs"
+          },
+          "endReason": {
+            "type": "string",
+            "enum": [
+              "paused",
+              "trigger_deleted",
+              "turn_timeout"
+            ],
+            "description": "paused: the turn's post was refused by a turn cap (the pause line); trigger_deleted: the message it answers was deleted; turn_timeout: it needs attention because a queued turn produced nothing within its budget"
+          },
+          "generation": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "the claim's current generation (null when there is no claim)"
+          },
+          "seq": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "held",
+          "state",
+          "replied"
+        ]
+      },
+      {
+        "type": "object",
+        "title": "dismiss",
+        "properties": {
+          "dismissed": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "dismissed"
+        ]
+      },
+      {
+        "type": "object",
+        "title": "skip",
+        "properties": {
+          "skipped": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "required": [
+          "skipped"
+        ]
+      },
+      {
+        "type": "object",
+        "title": "silent",
+        "properties": {
+          "silent": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "outcome": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "replied",
+              "reacted",
+              "silent",
+              null
+            ],
+            "description": "how the turn ended: replied, reacted or silent; null while it runs"
+          },
+          "cursor": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "the agent's persisted cursor after the move"
+          }
+        },
+        "required": [
+          "silent",
+          "outcome",
+          "cursor"
+        ]
+      }
+    ]
+  },
+  "AGENT_CLAIM_ANSWER_SCHEMA": {
+    "type": "object",
+    "title": "claim / retry",
+    "properties": {
+      "claimed": {
+        "type": "boolean",
+        "enum": [
+          true
+        ]
+      },
+      "seq": {
+        "type": "integer"
+      },
+      "generation": {
+        "type": "integer"
+      },
+      "event": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "channelId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "parentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "seq": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "agentInboxSeq": {
+            "type": "integer",
+            "description": "the account-wide inbox position (acknowledge it)"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sender": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "firstName": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "lastName": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "isAgent": {
+                "type": "boolean"
+              },
+              "agentProvider": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "agentHandle": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "isOwner": {
+                "type": "boolean",
+                "description": "the sender is this AI teammate's owner: only the owner's own messages may make it open local files"
+              }
+            },
+            "required": [
+              "id",
+              "isAgent"
+            ]
+          },
+          "channel": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "channelKey": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "agentResponseMode": {
+                "type": "string"
+              },
+              "dealId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "a deal channel's deal (null when none, or fenced for this agent)"
+              },
+              "contactId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid",
+                "description": "a contact channel's contact (null when none, or fenced for this agent)"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind"
+            ]
+          },
+          "localFiles": {
+            "type": "boolean",
+            "description": "this turn may read the owner's local files: the owner sent the message and the workspace's Local files switch is on. Read on the owner's computer only; a reply that used local files names them in localSources"
+          },
+          "addressedBy": {
+            "type": "string",
+            "enum": [
+              "mention",
+              "thread_follow_up",
+              "channel"
+            ],
+            "description": "why this AI teammate was handed the message: mention (it was mentioned), thread_follow_up (a person replied, mentioning nobody, in a thread whose most recent answer is this teammate's), or channel (AI Team Chat, a DM, or a channel set to always). Present only while the workspace's thread view is on"
+          },
+          "turn": {
+            "type": "object",
+            "description": "who this AI teammate is on this turn, why it was handed the message, and the channel's other AI teammates",
+            "properties": {
+              "you": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "handle": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "handle"
+                ]
+              },
+              "workspace": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "the workspace's name"
+              },
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "mention",
+                  "handoff",
+                  "thread_follow_up",
+                  "dm",
+                  "ai_team_chat",
+                  "always_channel"
+                ],
+                "description": "why this teammate was handed the message: mention (a person mentioned it), handoff (an AI teammate's message mentioned it: answer the part handed to you), thread_follow_up (a person replied in a thread it answered), dm (a direct message to it), ai_team_chat (the AI Team Chat room), always_channel (a channel set to answer every message)"
+              },
+              "teammates": {
+                "type": "array",
+                "description": "the channel's OTHER active AI teammates (mention one with the composer markup @[Name](id))",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "handle": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "handle"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "you",
+              "workspace",
+              "reason",
+              "teammates"
+            ]
+          },
+          "chainRemaining": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "how many more consecutive AI posts this turn's thread takes before Conduyt pauses the AI teammates there: the agent-to-agent chain cap minus the thread's current run of consecutive AI posts, never below 0; at 0 an AI reply to another AI's message in the thread is refused with the pause line"
+          },
+          "turnsRemainingToday": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "this teammate's daily turn budget left after this turn is charged (on the inbox page the claim has not charged it yet; on a claim's retried event it has), never below 0"
+          },
+          "context": {
+            "type": "object",
+            "description": "the recent context this agent may see before the event: for a reply (thread) event, its thread; for a top-level event, the channel's top-level stream plus recent AI-teammate replies from the channel's threads (other threads), each carrying the body prefix context.recent[].body describes",
+            "properties": {
+              "recent": {
+                "type": "array",
+                "description": "the earlier non-deleted messages before the event, oldest first, nothing at or below the workspace's or the channel's agent fence. A reply (thread) event: at most the last 20 of its thread (its root and replies). A top-level event: at most the last 20 of the channel's top-level stream plus at most the last 6 AI-teammate replies from the channel's threads (any teammate, this one included; each body prefixed, see body), merged by seq, so at most 26",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "seq": {
+                      "type": "integer"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "description": "text, a card kind, or system (a guard line such as a pause)"
+                    },
+                    "body": {
+                      "type": "string",
+                      "description": "the stored text (for a key without deal access, a text that contains \"rec:deal:\" anywhere is replaced WHOLE by \"[message mentions a deal]\" and nothing of it is shown (a plain-text \"rec:deal:\" is replaced the same way, by design)), bounded to 2,000 characters with a \" [truncated]\" tail. Rows of the event's own stream carry no prefix. An AI-teammate reply that a TOP-LEVEL event carries from one of the channel's threads carries a prefix: the body starts with \"[<author>, <time>, <where>] \" and then the reply's own text; <author> is \"your reply\" when this teammate wrote it; otherwise <author> is the writing teammate's name, or \"AI teammate\" when it has no name; followed by \" (@<handle>)\" when that teammate has a handle, and by nothing when it has none; <time> is the reply's creation time in UTC, \"YYYY-MM-DD HH:MM UTC\"; <where> is in the thread under \"<line>\" only when the thread's root is shown: the ultimate root (its root_id, else its parent chain walked up at most 64 edges without a cycle) exists, is in the same channel, is above the agent fences, is not deleted, and for a key without deal access, the message is neither a deal / handoff / help / panic / win card naming a deal (metadata.card.dealId) nor any message carrying a top-level metadata.dealId; <line> comes from the root's first line: for a key without deal access, a root whose WHOLE body contains the deal-mention literal shows \"[message mentions a deal]\" as <line> and nothing of its own text (a text that contains \"rec:deal:\" anywhere is replaced WHOLE by \"[message mentions a deal]\" and nothing of it is shown (a plain-text \"rec:deal:\" is replaced the same way, by design); tested on the whole body before the first line is taken and before any cut); otherwise the first line is taken and only its first 400 characters are read, trimmed, and it must not be empty; it is cut at 120 code points (a character outside the BMP is never split; a multi-code-point emoji sequence can be) followed by \"...\" when longer; otherwise <where> is \"in a thread\""
+                    },
+                    "sender": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "name": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "isAgent": {
+                          "type": "boolean"
+                        },
+                        "agentHandle": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "isAgent",
+                        "agentHandle"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "seq",
+                    "createdAt",
+                    "kind",
+                    "body",
+                    "sender"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "recent"
+            ]
+          },
+          "alsoAnswers": {
+            "type": "array",
+            "maxItems": 200,
+            "description": "present only when this ONE turn also answers earlier messages to this AI teammate in the same thread (a burst of mentions): ALL of them, oldest first (a fold is at most 49 earlier messages on one page; maxItems leaves room for the folds a released claim carried). Answer them all in this turn's one reply; their own turns were folded into this one and are never served, charged or claimed (this event's claim records them as skipped)",
+            "items": {
+              "type": "object",
+              "properties": {
+                "messageId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "senderId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "senderName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "body": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "the message text, cut to 1,000 characters with a ... marker. When the serialised list would pass its UTF-8 byte budget (the larger of 24 KB and 490 bytes per entry) every body is instead cut to an equal share of the budget left after the fixed fields (counted in serialised bytes, so a control character is 6), at least 80 bytes, and long sender names are shortened first (40 characters, then 24 serialised bytes). A body is never emptied and no entry is ever dropped (the whole text is in the thread: read_thread)"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "messageId",
+                "senderId",
+                "senderName",
+                "body",
+                "createdAt"
+              ]
+            }
+          },
+          "alsoTotal": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "present with alsoAnswers: how many earlier messages this turn folded in: always the length of alsoAnswers (kept for compatibility)"
+          },
+          "instructions": {
+            "type": "string",
+            "description": "what to do with this turn, in plain words: where a reply goes, then the turn rules every AI teammate follows (answer automatically through the Conduyt tools, the one action policy with the claim token, never report back to the owner instead, the claim token only as the tools' argument). No id or token: a listener prints it verbatim beside the turn's ids and claim token"
+          }
+        },
+        "required": [
+          "id",
+          "channelId",
+          "agentInboxSeq",
+          "parentId",
+          "body",
+          "sender",
+          "channel"
+        ],
+        "description": "the event to run, as the server serves it NOW, rebuilt after the claim recorded its fold: a claim (not only a retry) returns it, with alsoAnswers holding the WHOLE fold the claim recorded (an event another listener released between the page and the claim included). A listener dispatches THIS event, never the page's copy; one that does not read it falls back to the page's event"
+      }
+    },
+    "required": [
+      "claimed",
+      "seq",
+      "generation"
+    ]
+  },
+  "AGENT_STATUS_ANSWER_SCHEMA": {
+    "type": "object",
+    "title": "status",
+    "properties": {
+      "held": {
+        "type": "boolean"
+      },
+      "state": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "started",
+          "done",
+          "released",
+          "needs_attention",
+          "dismissed",
+          "skipped",
+          null
+        ]
+      },
+      "replied": {
+        "type": "boolean",
+        "description": "the turn's receipt: its reply, its reaction (with the claim token) or its silence (outcome says which)"
+      },
+      "outcome": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "enum": [
+          "replied",
+          "reacted",
+          "silent",
+          null
+        ],
+        "description": "how the turn ended: replied, reacted or silent; null while it runs"
+      },
+      "endReason": {
+        "type": "string",
+        "enum": [
+          "paused",
+          "trigger_deleted",
+          "turn_timeout"
+        ],
+        "description": "paused: the turn's post was refused by a turn cap (the pause line); trigger_deleted: the message it answers was deleted; turn_timeout: it needs attention because a queued turn produced nothing within its budget"
+      },
+      "generation": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "description": "the claim's current generation (null when there is no claim)"
+      },
+      "seq": {
+        "type": [
+          "integer",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "held",
+      "state",
+      "replied"
+    ]
+  },
+  "AGENT_CLAIM_CONFLICT_SCHEMA": {
+    "type": "object",
+    "properties": {
+      "error": {
+        "type": "string"
+      },
+      "code": {
+        "type": "string",
+        "enum": [
+          "agent_event_claimed",
+          "agent_event_done",
+          "agent_claim_lost",
+          "agent_claim_not_retryable",
+          "agent_claim_replied",
+          "agent_claim_possibly_replied",
+          "agent_claim_not_dismissable",
+          "agent_event_not_skippable",
+          "turn_finished"
+        ]
+      },
+      "outcome": {
+        "type": "string",
+        "enum": [
+          "replied",
+          "reacted",
+          "silent",
+          "paused",
+          "trigger_deleted"
+        ],
+        "description": "turn_finished only: how the turn already ended (paused / trigger_deleted: the server ended it, nothing was posted)"
+      },
+      "seq": {
+        "type": "integer",
+        "description": "agent_claim_replied only: the inbox position to acknowledge"
+      },
+      "generation": {
+        "type": "integer",
+        "description": "agent_claim_replied only: the generation to acknowledge with"
+      }
+    },
+    "required": [
+      "error",
+      "code"
+    ],
+    "if": {
+      "properties": {
+        "code": {
+          "const": "turn_finished"
+        }
+      },
+      "required": [
+        "code"
+      ]
+    },
+    "then": {
+      "required": [
+        "outcome"
+      ]
+    }
+  },
+  "AGENT_BUDGET_EXHAUSTED_SCHEMA": {
+    "type": "object",
+    "properties": {
+      "error": {
+        "type": "string"
+      },
+      "code": {
+        "type": "string",
+        "enum": [
+          "agent_daily_budget_exhausted"
+        ]
+      },
+      "turnsToday": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "turns (successful claims) taken in the workspace's day (its settings timezone)"
+      },
+      "budget": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "the daily turn budget (200)"
+      },
+      "resetAt": {
+        "type": "string",
+        "format": "date-time",
+        "description": "the next midnight in the workspace's timezone"
+      }
+    },
+    "required": [
+      "error",
+      "code",
+      "turnsToday",
+      "budget",
+      "resetAt"
+    ]
+  },
+  "AGENT_PAIR_RESULT_SCHEMA": {
+    "type": "object",
+    "properties": {
+      "apiKey": {
+        "type": "string",
+        "pattern": "^cdy_[0-9a-f]{48}$",
+        "description": "the listener key, shown once"
+      },
+      "agent": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "handle": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "claude_code",
+              "codex",
+              "grok",
+              "clawdbot",
+              "hermes_plugin"
+            ]
+          },
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "the teammate's workspace"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "handle",
+          "provider",
+          "accountId"
+        ]
+      },
+      "rateLimit": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "apiKey",
+      "agent",
+      "rateLimit"
+    ]
+  }
+}

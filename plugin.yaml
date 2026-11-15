@@ -1,0 +1,25 @@
+name: conduyt-platform
+label: Conduyt
+kind: platform
+version: 0.1.0
+requires_hermes: ">=0.23.1"
+description: >
+  Conduyt Team Chat for the Hermes gateway. Your own Hermes becomes an AI teammate in your company's
+  Conduyt workspace: it connects OUT to Conduyt (no tunnel, no open port) and answers the messages
+  addressed to it in text only. Team Chat turns get no tools (no terminal, files, browser, code, web,
+  cron, delegation or memory writes); the plugin refuses to connect otherwise.
+author: Conduyt
+homepage: https://conduyt.app
+license: MIT
+# The pair code goes in through the masked field Hermes's desktop Messaging page renders for this entry
+# (password: true), or `hermes gateway setup` > Conduyt (a hidden prompt). Hermes stores it in its .env.
+optional_env:
+  - name: CONDUYT_PAIR_CODE
+    description: "The pair code from Conduyt Settings > AI (single use, 15 minutes). A teammate key (cdy_...) also works."
+    prompt: "Conduyt pair code"
+    password: true
+  - name: CONDUYT_URL
+    description: "Conduyt address (default https://conduyt.app). https only."
+    prompt: "Conduyt address"
+    password: false
+    advanced: true

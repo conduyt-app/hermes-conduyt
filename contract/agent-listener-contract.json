@@ -1,0 +1,69 @@
+{
+  "generatedAt": "2026-11-09T22:57:47.413Z",
+  "endpoints": {
+    "POST /api/v1/chat/agents/pair": {
+      "params": [],
+      "bodyFields": [
+        "code"
+      ],
+      "hasRequestBody": true
+    },
+    "POST /api/v1/chat/agents/me/heartbeat": {
+      "params": [],
+      "bodyFields": [
+        "listenerId",
+        "version"
+      ],
+      "hasRequestBody": true
+    },
+    "GET /api/v1/chat/agents/me/inbox": {
+      "params": [
+        "afterSeq",
+        "wait"
+      ],
+      "bodyFields": [],
+      "hasRequestBody": false
+    },
+    "POST /api/v1/chat/agents/me/inbox/claim": {
+      "params": [],
+      "bodyFields": [
+        "action",
+        "force",
+        "generation",
+        "listenerId",
+        "messageId",
+        "possiblyReplied",
+        "reason"
+      ],
+      "hasRequestBody": true
+    },
+    "POST /api/v1/chat/agents/me/inbox/ack": {
+      "params": [],
+      "bodyFields": [
+        "generation",
+        "listenerId",
+        "messageId",
+        "seq"
+      ],
+      "hasRequestBody": true
+    },
+    "POST /api/v1/chat/channels/:id/messages": {
+      "params": [],
+      "bodyFields": [
+        "alsoInChannel",
+        "body",
+        "card",
+        "claimToken",
+        "effect",
+        "idempotencyKey",
+        "kind",
+        "localSources",
+        "metadata",
+        "parentId",
+        "testToken",
+        "turnToken"
+      ],
+      "hasRequestBody": true
+    }
+  }
+}

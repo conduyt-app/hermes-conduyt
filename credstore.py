@@ -91,7 +91,9 @@ def _open_dir(folder: Path, *, create: bool = False, root: Optional[Path] = None
         raise
 
 
-def write_secret(folder: Path, name: str, data: dict, *, root: Optional[Path] = None) -> None:
+def write_secret(folder: Path, name: str, data: dict, *, root: Optional[Path] = None, durable_dir: bool = False) -> None:
+    """``durable_dir``: the folder's fsync after the rename must succeed too (the thread ledger, rule D); off for the
+    credential file, whose callers already tolerate a lost write (pairing again recovers it)."""
     dfd = _open_dir(folder, create=True, root=root)
     tmp = f".{name}.{os.getpid()}.{os.urandom(6).hex()}"
     try:
@@ -107,6 +109,11 @@ def write_secret(folder: Path, name: str, data: dict, *, root: Optional[Path] = 
             raise
         _race_point(f"replace:{name}")
         os.replace(tmp, name, src_dir_fd=dfd, dst_dir_fd=dfd)
+        try:
+            os.fsync(dfd)   # the rename itself survives a crash
+        except OSError:
+            if durable_dir:
+                raise
     finally:
         try:
             os.unlink(tmp, dir_fd=dfd)
@@ -115,7 +122,7 @@ def write_secret(folder: Path, name: str, data: dict, *, root: Optional[Path] = 
         os.close(dfd)
 
 
-def read_secret(folder: Path, name: str, *, root: Optional[Path] = None) -> Optional[dict]:
+def read_secret(folder: Path, name: str, *, root: Optional[Path] = None, require_dict: bool = False) -> Optional[dict]:
     dfd = _open_dir(folder, root=root)
     if dfd is None:
         return None
@@ -131,6 +138,8 @@ def read_secret(folder: Path, name: str, *, root: Optional[Path] = None) -> Opti
             if not stat.S_ISREG(st.st_mode) or st.st_uid != os.getuid() or st.st_mode & 0o077:
                 raise UnsafePath(f"{folder / name} is not a private file of this user (mode {oct(st.st_mode & 0o777)})")
             data = json.load(f)
+        if require_dict and not isinstance(data, dict):
+            raise ValueError(f"{name} does not hold a JSON object")
         return data if isinstance(data, dict) else None
     finally:
         os.close(dfd)
@@ -183,9 +192,9 @@ class CredentialState:
         else:
             write_secret(self.folder, CREDENTIAL_FILE, value, root=self.root)
 
-    def read_json(self, name: str) -> Optional[dict]:
-        return read_secret(self.folder, name, root=self.root) if self.folder is not None else None
+    def read_json(self, name: str, require_dict: bool = False) -> Optional[dict]:
+        return read_secret(self.folder, name, root=self.root, require_dict=require_dict) if self.folder is not None else None
 
-    def write_json(self, name: str, data: dict) -> None:
+    def write_json(self, name: str, data: dict, durable_dir: bool = False) -> None:
         if self.folder is not None:
-            write_secret(self.folder, name, data, root=self.root)
+            write_secret(self.folder, name, data, root=self.root, durable_dir=durable_dir)

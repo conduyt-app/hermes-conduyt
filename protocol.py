@@ -36,7 +36,7 @@ DEFAULT_BASE_URL = "https://conduyt.app"
 CLIENT_NAME = "hermes-conduyt-plugin"
 #: this plugin's own version, sent with every heartbeat beside x-conduyt-client: hermes-conduyt-plugin, which the app keys the
 #: Settings card's Test on (app lib/agent-webhook-connect.ts AGENT_LISTENER_TEST_CLIENTS); keep equal to plugin.yaml's version
-PLUGIN_VERSION = "0.1.1"
+PLUGIN_VERSION = "0.1.2"
 REQUEST_TIMEOUT_S = 30.0
 INBOX_WAIT_S = 25
 KEY_RE = re.compile(r"^cdy_[0-9a-f]{48}$")
